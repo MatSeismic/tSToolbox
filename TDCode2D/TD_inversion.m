@@ -2,15 +2,17 @@
 clear, close all
 
 %parpool(12);
+% parpool;
 
-name = 'AllRio_tSWF';
+name = 'CIELO';
 
 TD_parameters = define_TDstructure( );
 
-dataStruct  = load_data_AllRio_tSWF(TD_parameters, 'All');
+dataStruct  = load_data(TD_parameters);
 
 TD_parameters.interp_style = 'nearest';
 TD_parameters.sig_flag     = 3;
+
 
 %% Let's invert
 parfor k = 1:TD_parameters.n_chains

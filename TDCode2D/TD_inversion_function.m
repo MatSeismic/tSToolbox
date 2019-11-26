@@ -79,11 +79,9 @@ function [ model_hist ] = TD_inversion_function(TD_parameters, dataStruct)
     
     model.phi = NaN;
         
-    [ model.phi, likelyhood] = evaluate(model.xCell, model.yCell, model.tSCell, dataStruct.allTS, allSig, ...
+    [ model.phi, model.likelyhood] = evaluate(model.xCell, model.yCell, model.tSCell, dataStruct.allTS, allSig, ...
         dataStruct.dataE, dataStruct.dataX, dataStruct.dataY, TD_parameters);
-            
-    model.likelyhood         = likelyhood;
-        
+               
     for iter = 1:TD_parameters.n_iter
         
         %pick birth, death, move, change, or noise
