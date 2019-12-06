@@ -1,6 +1,6 @@
 % save the results from linear inversion to txt file
 
-load('LinearInv');
+load('LinearInv2');
 
 allX = xMat(:);
 allY = yMat(:);

@@ -7,12 +7,12 @@ clear, close all
 %EDIT THESE LINES TO CONTROL THE INVERSION
 smoothness          = 5;
 station_smallness   = 5;
-model_smallness     = 1;
+model_smallness     = 0.25;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %EDIT THIS LINE TO LOAD THE DATA
-fnames = dir('../MM_raw/*Measurement.mat');
+fnames = dir('../../Mv03/*Measurement.mat');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%
@@ -22,10 +22,10 @@ name = 'LinearInv2';
 
 %%%%%%
 %These lines control how things are plotted
-v                   = -0.15:0.01:0.15;
+v                   = -0.2:0.01:0.2;
 clim                = [-0.15 0.15];
 save_for_gmt        = 0;%not possible in this verison of the code
-rotation            = 55;
+rotation            = 0;
 collapse_y          = 0;
 buffer              = 20;%in km on the outside
 
@@ -79,6 +79,8 @@ for k=1:length(fnames)
         
         ln=ts_run(kt).longitude;
         ts_run(kt).longitude=ln(1);
+        
+        ts_run(kt).station = [ts_run(kt).network '.' ts_run(kt).station];
         
     end
     
@@ -165,6 +167,13 @@ for k=1:length(dataI)
    dataI(k)=find(strcmp(allSta{k},uSta));
 
 end
+
+%get the lat and lon for the stations
+for k = 1:length(uSta)
+    lon_sta(k) = allLons(find(dataI==k, 1));
+    lat_sta(k) = allLats(find(dataI==k, 1));
+end
+
 
 % First make the G, one row at a time:
 % x and y of each model point as row vectors

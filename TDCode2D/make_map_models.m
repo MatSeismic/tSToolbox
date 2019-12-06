@@ -50,7 +50,7 @@ function [ model_stats ] = make_map_models( models, xMat, yMat, sig_flag, pdf_x,
         
     else
             
-         model_stats.sig     = mean(sigmat);
+         model_stats.sig     = mean([models.allSig]);
          model_stats.sig_sig = std([models.allSig], 0, 2);
          
     end

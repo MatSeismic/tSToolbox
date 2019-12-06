@@ -75,7 +75,7 @@ C(oce)=0.1;
 disp('making figure')
 
 figure
-surface(elon,elat,elev/10000,C,'EdgeColor','none')
+s=surface(elon,elat,elev/10000,C,'EdgeColor','none')
 daspect([1 cosd(40) 1])
 xlabel('longitude (°)')
 ylabel('latitude (°)')
@@ -94,4 +94,18 @@ hcb.Label.FontSize=14;
 set(gcf,'position',[400 264 700 540])
 
 hold on
-scatter3(lon_sta, lat_sta, ones(size(lon_sta)).*max(max(elev))/10000, 10, 'blue');
+
+% ixTA = any(strncmp(uSta, ['TA';'IW';'US';'IU'], 2));
+ixTA = strncmp(uSta, 'TA', 2) | strncmp(uSta, 'IW', 2) | strncmp(uSta, 'US', 2) | strncmp(uSta, 'IU', 2) | strncmp(uSta, 'Z2', 2);
+ixCIELO = strncmp(uSta, '2F', 2);
+ixBASE = strncmp(uSta, 'XV', 2);
+% TAsta = uSta(any(strncmp(uSta, ['TA';'IW';'US';'IU'], 2)));
+% CIELOsta = uSta(strncmp(uSta, '2F', 2));
+% BASEsta = uSta(strncmp(uSta, 'XV', 2));
+
+s1=scatter3(lon_sta(ixTA), lat_sta(ixTA), ones(size(lon_sta(ixTA))).*max(max(elev))/10000, 15, 'blue','v', 'filled', 'MarkerEdgeColor', 'w');
+hold on;
+s2=scatter3(lon_sta(ixCIELO), lat_sta(ixCIELO), ones(size(lon_sta(ixCIELO))).*max(max(elev))/10000, 15, 'black' ,'v', 'filled', 'MarkerEdgeColor', 'w');
+hold on;
+s3=scatter3(lon_sta(ixBASE), lat_sta(ixBASE), ones(size(lon_sta(ixBASE))).*max(max(elev))/10000, 15, 'red','v', 'filled', 'MarkerEdgeColor', 'w');
+legend([s1 s2 s3], {'TA', 'CIELO', 'BASE'}, 'location', 'southeast');
