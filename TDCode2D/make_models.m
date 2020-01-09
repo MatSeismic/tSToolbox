@@ -80,7 +80,7 @@ function [ model_stats, pdf_set_plot ] = make_models( models, xMat, yMat, sig_fl
         [~, ind] = max(y);
         model_stats.mode(k) = pdf_x_fine(ind);
 
-        cdf_set(k,:) = cumtrapz(pdf_x,pdf_set);
+        cdf_set(k,:) = cumtrapz(pdf_x,pdf_set); %integrate the pdfs
 
         [~,ind] = min(abs(cdf_set(k,:) - ( 0.5 - unc_level/2 ) ));
         model_stats.unc_p(k) = pdf_x(ind);
@@ -93,6 +93,7 @@ function [ model_stats, pdf_set_plot ] = make_models( models, xMat, yMat, sig_fl
     
     pdf_set_plot = reshape(pdf_set_plot, [size(xMat) length(pdf_x)]);
     
+    model_stats.pdf_set = pdf_set_plot;
     model_stats.mean      = reshape(model_stats.mean, size(xMat));
     model_stats.std       = reshape(model_stats.std, size(xMat));
     model_stats.skewness  = reshape(model_stats.skewness, size(xMat));

@@ -67,7 +67,7 @@ function [ dataStruct ] = load_data( TD_parameters )
 
     %projected lat/lon of observations to X/Y:
     [dataX, dataY] = mfwdtran(mstruct,allLats,allLons);
-    dataY = zeros(size(dataY));
+%     dataY = zeros(size(dataY)); %???? why
 
     %make the grid on which to invert
 
@@ -89,6 +89,7 @@ function [ dataStruct ] = load_data( TD_parameters )
     dataStruct.dataE   = dataE;
     dataStruct.xVec    = xVec;
     dataStruct.yVec    = yVec;
+    dataStruct.mstruct = mstruct; %% for the purpose of plotting results on topo map
     
 end
 

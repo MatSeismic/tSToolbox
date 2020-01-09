@@ -8,9 +8,9 @@ function [ TD_parameters ] = define_TDstructure( )
     TD_parameters.min_error        = 0.0001;
     TD_parameters.interp_style     = 'nearest';%linear or nearest
     TD_parameters.ydamp            = 1;
-    TD_parameters.range            = [ -0.1 0.1 ];
+    TD_parameters.range            = [ -0.2 0.2 ];
     TD_parameters.n_chains         = 10;
-    TD_parameters.n_iter           = 1e4;%for now, just iterate to a max
+    TD_parameters.n_iter           = 5e5;%for now, just iterate to a max
     TD_parameters.burn_in          = 2.5e3;
     TD_parameters.keep_each        = 2.5e2;
     TD_parameters.max_cells        = 100;%for starting
@@ -22,7 +22,7 @@ function [ TD_parameters ] = define_TDstructure( )
     TD_parameters.likelyhood       = 'Laplacian';%Gaussian or Laplacian
     
     %%%%%%%map parameters
-    TD_parameters.nodeSpacing      = 20;%also used for slices the ray path
+    TD_parameters.nodeSpacing      = 40;%also used for slices the ray path
     TD_parameters.buffer           = 50;%in km
     TD_parameters.rotation         = 0;%in degrees
     TD_parameters.save_for_gmt     = 1;

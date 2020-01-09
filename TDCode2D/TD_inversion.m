@@ -2,7 +2,7 @@
 clear, close all
 
 %parpool(12);
-% parpool;
+parpool;
 
 name = 'CIELO';
 
@@ -44,15 +44,26 @@ models          = models(:);
 [ model_stats ] = make_models( models, xMat, yMat, TD_parameters.sig_flag, -0.5:0.05:0.5, 0.66, TD_parameters.interp_style);
 
 figure
-contourf(xMat, yMat, model_stats.mean, -0.1:0.02:0.1);
+contourf(xMat, yMat, model_stats.mean, -0.2:0.02:0.2);
 h = colorbar; h.Label.String = '\Deltat*';
 colormap('pink')
 hold on
 plot(dataStruct.dataX, dataStruct.dataY, 'rs');
+title('\Deltat* variation');
+saveas(gcf, [name 'inversion' num2str(n) 'tstar'],'png');
+
+figure
+contourf(xMat, yMat, model_stats.std);
+h = colorbar; h.Label.String = 'std';
+hold on
+plot(dataStruct.dataX, dataStruct.dataY, 'rs');
+title('std variation');
+saveas(gcf, [name 'inversion' num2str(n) 'std'],'png');
+
 
 [X, P] = meshgrid(xMat(1, :), -0.5:0.05:0.5);
 
 figure
-contourf(X', P', squeeze(model_stats.pdf_set(4,:,:)), 10)
+contourf(X', P', squeeze(model_stats.pdf_set(5,:,:)), 10)
 colorbar
 colormap(flipud(pink))

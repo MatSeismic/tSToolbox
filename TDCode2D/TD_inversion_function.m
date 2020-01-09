@@ -130,6 +130,8 @@ function [ model_hist ] = TD_inversion_function(TD_parameters, dataStruct)
                 end
                 
                 tSCell_n(end) = max( [ TD_parameters.range(1) min([ tSCell_n(end) TD_parameters.range(2) ]) ]);
+                % ensure tSCell_n(end) lies in the range of
+                % TD_parameters.range
                 
                 [phiN, likelyhood] = evaluate(xCell_n, yCell_n, tSCell_n, dataStruct.allTS, allSig, dataStruct.dataE, ...
                     dataStruct.dataX, dataStruct.dataY, TD_parameters);
@@ -427,10 +429,10 @@ function [ model_hist ] = TD_inversion_function(TD_parameters, dataStruct)
                                                         
         end
 
-        llhist(iter)        = likelyhood;
+%         llhist(iter)        = likelyhood;
         model.likelyhood    = likelyhood;
-        sig_hist(iter, :)   = model.allSig;
-        n_hist(iter)        = model.nCells;
+%         sig_hist(iter, :)   = model.allSig;
+%         n_hist(iter)        = model.nCells;
                 
         if iter == 1
            

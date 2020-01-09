@@ -4,9 +4,9 @@ clc
 close all
 load('CMfine.mat')
 
-savename = 'Rio16';
+savename = 'CIELO';
 
-loadname = './AllRio_tSWF*';
+loadname = './CIELOinversion1.mat';
 
 label = '\Deltat*_p, s';
 %label = '\Delta\Sigma';
@@ -19,7 +19,7 @@ error_contours       = 0:0.01:0.1;
 plot_sta             = 0;
 
 load('usastates.mat');
-statesdir = 'C:\Research\tstar\TDCode2D\tectonicprovinces\';
+statesdir = '.\tectonicprovinces\';
 
 bnames={'Bound1'
         'Bound2'
@@ -125,8 +125,8 @@ end
 xlim(xl);
 ylim(yl);
 
-set(gca, 'XTick', []);
-set(gca, 'YTick', []);
+% set(gca, 'XTick', []);
+% set(gca, 'YTick', []);
 
 caxis([min(map_contours) max(map_contours)])
 
