@@ -188,6 +188,9 @@ function done_btn_Callback(hObject, eventdata, handles)
     axes(handles.allWf_ax)
     hold on
     %plot all of the traces
+    line_handles = gobjects(length(Traces));
+    %preallocate memory for object handles
+    
     for k = 1:length(Traces)
 
         Traces(k).data = Traces(k).data/max(abs(Traces(k).data(fw_start:fitting_window(2))));
@@ -790,7 +793,8 @@ if ~dl
             Traces = wfRemInstResp(Traces); 
         end
 
-        filter_bounds = [ str2num(handles.LowHz.String) str2num(handles.HighHz.String) ];
+        filter_bounds = [ str2double(handles.LowHz.String) str2double(handles.HighHz.String) ];
+        % str2double appears to be faster than str2num
     
         filter_bounds(filter_bounds==0) = NaN;
         
@@ -851,7 +855,8 @@ if ~dl
         
         % set "use" to yes for all of them unless they are out of range
         useVec = true(1, length(Traces));
-        degVec = [ str2num(handles.MinDeg.String) str2num(handles.MaxDeg.String) ];
+        degVec = [ str2double(handles.MinDeg.String) str2double(handles.MaxDeg.String) ];
+        % str2double appears to be faster than str2num
         
         for k = 1:length(Traces)
            
@@ -868,7 +873,11 @@ if ~dl
         
         axes(handles.allWf_ax)
         hold on
-        %plot all of the traces
+        
+        % preallocate memory for graph handles
+        lh = gobjects(length(Traces));
+     
+        % plot all of the traces
         for k = 1:length(Traces)
 
             Traces(k).data = Traces(k).data/max(abs(Traces(k).data...
@@ -1286,6 +1295,9 @@ if strcmp(hOject.String, 'Hide Deleted')
 
     axes(handles.allWf_ax)
     hold on
+    
+    % preallocate memory
+    line_handles = gobjects(length(Traces));
     %plot all of the traces
     for k = 1:length(Traces)
 
@@ -1610,6 +1622,8 @@ delete(lh)
 
 axes(handles.allWf_ax)
 hold on
+
+line_handles = gobjects(length(Traces));
 %plot all of the traces
 for k = 1:length(Traces)
     

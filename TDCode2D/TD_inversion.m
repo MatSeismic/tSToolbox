@@ -60,7 +60,6 @@ plot(dataStruct.dataX, dataStruct.dataY, 'rs');
 title('std variation');
 saveas(gcf, [name 'inversion' num2str(n) 'std'],'png');
 
-
 [X, P] = meshgrid(xMat(1, :), -0.5:0.05:0.5);
 
 figure
