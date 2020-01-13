@@ -24,8 +24,16 @@ name = 'LinearInv2';
 %These lines control how things are plotted
 v                   = -0.2:0.01:0.2;
 clim                = [-0.15 0.15];
+<<<<<<< HEAD
 save_for_gmt        = 0;%not possible in this verison of the code
 rotation            = 0;
+||||||| merged common ancestors
+save_for_gmt        = 0;%not possible in this verison of the code
+rotation            = 55;
+=======
+save_for_gmt        = 1;
+rotation            = 55;
+>>>>>>> origin/master
 collapse_y          = 0;
 buffer              = 20;%in km on the outside
 
@@ -305,5 +313,13 @@ end
 figure(2)
 histogram(MIsta)
 xlabel('Size of the station terms');
+
+if save_for_gmt
+   
+    [lon,lat] = minvtran(mstruct, xMat, yMat);
+    
+    dlmwrite([name '.txt'], [ lon(:) lat(:) MImodel(:) ]);
+    
+end
 
 save(name, 'MImodel', 'xMat', 'yMat', 'mstruct', 'MIevt', 'MIsta', 'dataE', 'dataI', 'dataV', 'dataX', 'dataY', 'uSta');

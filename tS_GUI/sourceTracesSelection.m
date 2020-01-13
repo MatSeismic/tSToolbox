@@ -22,7 +22,7 @@ function varargout = sourceTracesSelection(varargin)
 
 % Edit the above text to modify the response to help sourceTracesSelection
 
-% Last Modified by GUIDE v2.5 06-Aug-2019 12:04:56
+% Last Modified by GUIDE v2.5 21-Nov-2019 11:45:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -71,8 +71,12 @@ setappdata(gcf, 'plotmode', 1);
 addpath(genpath('./wfTools/'))
 addpath(genpath('./PickingCode/'))
 
-addpath('../irisFetch/')
-javaaddpath('../irisFetch/IRIS-WS-2.0.18.jar')
+%set default parameters
+setappdata(gcf, 'HighCorner', '3');
+setappdata(gcf, 'LowCorner', '0.02');
+setappdata(gcf, 'ChannelsKeep', 'BHZ');
+setappdata(gcf, 'DeltaUpperLimit', '90');
+setappdata(gcf, 'DeltaLowerLimit', '30');
 
 % set the keypress_fcn for the figure
 set(gcf,'WindowKeyPressFcn',@chngTr)
@@ -193,10 +197,11 @@ function done_btn_Callback(hObject, eventdata, handles)
     
     for k = 1:length(Traces)
 
-        Traces(k).data = Traces(k).data/max(abs(Traces(k).data(fw_start:fitting_window(2))));
+        Traces(k).data = Traces(k).data/max(Traces(k).data(fw_start:fitting_window(2)));
 
-        line_handles(k) = plot(t, Traces(k).data + k, 'k-', 'lineWidth', 1);
-
+        line_handles(k)               = plot(t, Traces(k).data + k, 'k-', 'lineWidth', 1);
+        line_handles(k).ButtonDownFcn = @ClickCWF;
+        
     end
 
     xlabel('Time, s')
@@ -243,6 +248,16 @@ function done_btn_Callback(hObject, eventdata, handles)
     plotMap
     
 function chngTr(figH,key)
+
+%for browsing for a file
+if ~isempty(key.Modifier) && strcmp(key.Modifier, 'control') && strcmp(key.Key, 'd')
+   
+    [fname, dirname]           = uigetfile('*.mat','Please select data file');
+    pathStr                    = [dirname fname];
+    handles                    = guihandles;
+    handles.DataLoadBox.String = pathStr;
+   
+end
 
 dataLoaded = getappdata(gcf, 'dataLoaded');
 
@@ -399,7 +414,6 @@ forSrc   = getappdata(gcf, 'forSrc');
 stfw     = getappdata(gcf, 'fw_start');
 fw       = getappdata(gcf, 'fitting_window');
 
-
 if useVec(cwf) == 1
     
     ls = '-';
@@ -451,8 +465,7 @@ if plotmode == 1
         delete(findobj('Tag','theTrace')); %this just gets rid of the previous one
         h=plot(t, Traces(cwf).data/rms(Traces(cwf).data(t > stfw & t < fw(2))),'b', 'LineStyle', ls, 'linewidth',1.5);
         set(h,'Tag','theTrace')
- 
-%         h = legend('All source traces', 'Current source estimate', 'Current data', 'fwStart', 'fwEnd', 'fwMax');
+        
         h = legend('All source traces', 'Current source estimate', 'Current data');
         set(h, 'Tag', 'srcLegend');
         set(h, 'Location', 'northwest');
@@ -501,7 +514,7 @@ elseif plotmode == 2
     if ~isempty(h); delete(h); end
     
     stfwh            = getappdata(gcf, 'stfwh');
-    fwh            = getappdata(gcf, 'fwh');
+    fwh              = getappdata(gcf, 'fwh');
     if ~isempty(stfwh); delete(stfwh); end
     if ~isempty(fwh); delete(fwh); end
     
@@ -515,7 +528,6 @@ elseif plotmode == 2
         
     end
     
-%     h = legend('Data', [ 'Synthetic: \Deltat* = ' num2str(ts_run(fw_ind, cwf).tStar_WF, 3)], 'fwStart', 'fwEnd', 'fwMax');
     h = legend('Data', [ 'Synthetic: \Deltat* = ' num2str(ts_run(fw_ind, cwf).tStar_WF, 3)]);
     set(h, 'Tag', 'srcLegend');
     set(h, 'Location', 'northwest');
@@ -538,8 +550,8 @@ elseif plotmode == 2
     if ~isempty(htSFW);  delete(htSFW);  end
     if ~isempty(htSFWl); delete(htSFWl);  end
 
-    xax = linspace(fw(1), fw(2), nfw);
-    htSFW = plot(xax, [ts_run(:, cwf).tStar_WF], 'ko');
+    xax    = linspace(fw(1), fw(2), nfw);
+    htSFW  = plot(xax, [ts_run(:, cwf).tStar_WF], 'ko');
     htSFWl = plot([xax(fw_ind) xax(fw_ind) ], ylim, 'k--');
     xlabel('Fitting window ending, s');
     ylabel('\Deltat*, s');
@@ -758,8 +770,14 @@ function LoadDataButton_Callback(hObject, eventdata, handles)
 % first some parameters and things, not sure I need all this.
 
 handles  = guihandles;
-name     = getappdata(gcf, 'datapath');
+name     = handles.DataLoadBox.String;
 dl       = getappdata(gcf, 'dataLoaded');
+
+HighCorner      = getappdata(gcf, 'HighCorner');
+LowCorner       = getappdata(gcf, 'LowCorner');
+ChannelsKeep    = getappdata(gcf, 'ChannelsKeep');
+DeltaUpperLimit = getappdata(gcf, 'DeltaUpperLimit');
+DeltaLowerLimit = getappdata(gcf, 'DeltaLowerLimit');
 
 if ~dl
 
@@ -770,11 +788,15 @@ if ~dl
 
     end
     
-    xrange        = 30;    
+    xrange        = 20;    
     %get the data and plot it all
 
     if exist(name, 'file')
 
+        filter_bounds                   = [ str2num(LowCorner) str2num(HighCorner) ];
+        filter_bounds(filter_bounds==0) = NaN;
+        degVec = [ str2num(DeltaLowerLimit) str2num(DeltaUpperLimit) ];
+        
         load(name)
         
         handles.LoadDataButton.String = 'Loading...';
@@ -798,49 +820,135 @@ if ~dl
     
         filter_bounds(filter_bounds==0) = NaN;
         
-        for k = 1:length(Traces)
-
-            Traces(k).data = cumsum(Traces(k).data);
-            
-        end
-        
-        if ~isnan(filter_bounds)
 
            Traces = wfButterworth( Traces, filter_bounds);
 
-        end
+            end
 
-        for k = 1:length(Traces)
+            lon = [Traces.longitude];
+            [~, sind] = sort(lon);
+            Traces = Traces(sind);
 
-            Traces(k).data = diff(Traces(k).data);
-            Traces(k).data = Traces(k).data - mean(Traces(k).data);
-            Traces(k).data = Traces(k).data/rms(Traces(k).data);
+            % remove instrument response only when it has not been removed
+            % during fetching
+            if (any([Traces.instrument]))
+
+                Traces = wfRemInstResp(Traces); 
+
+            end
+
+            if ~isnan(filter_bounds)
+
+                Traces = wfButterworth( Traces, filter_bounds);
+
+            end
+
+            for k = 1:length(Traces)
+
+                Traces(k).data = Traces(k).data - mean(Traces(k).data);
+                Traces(k).data = Traces(k).data/rms(Traces(k).data);
+
+            end
+
+            % equalize trace length first
+            minlen = 1e100;
+            for k = 1:length(Traces)
+
+                minlen = min([minlen length(Traces(k).data)]);
+
+            end
+
+            for k = 1:length(Traces)
+
+                Traces(k).data        = Traces(k).data(1:minlen);
+                Traces(k).sampleCount = minlen;
+
+            end
+
+            xd             = minlen/Traces(1).sampleRate;
+            midpoint       = (xd/2);
+            xlimits        = [ (midpoint - xrange/2) ((midpoint) + xrange/2) ];
+            fitting_window = [ (midpoint - xrange/4) ((midpoint) + xrange/4) ];
+            fw_start       = (midpoint - xrange/3);
+            
+            % set "use" to yes for all of them unless they are out of range
+            useVec = true(1, length(Traces));
+
+            for k = 1:length(Traces)
+
+                [arc, azi] = distance(eventData.PreferredLatitude, eventData.PreferredLongitude, ...
+                    Traces(k).latitude, Traces(k).longitude);
+
+                if arc < degVec(1) || arc > degVec(2)
+
+                    useVec(k) = 0;
+
+                end
+
+                Traces(k).arc = arc;
+                Traces(k).azi = azi;
+
+            end
+
+            if ~any(useVec)
+
+                error('No traces within range');
+
+            end
+        
+            % set "inSrc" to no for all of them
+            inSrcVec = false(1, length(Traces));
+            
+            setappdata(gcf,'forSrc',        {[] []}); %these are the traces that will go into the source estimate
+            setappdata(gcf,'ts_run',        []); %clear any preexisting_run
+            setappdata(gcf,'level',         0); %clear any preexisting_run. NOT SAVED IN EARLIEST VERSIONS
+            
+            t = (1:minlen)/Traces(1).sampleRate;
+            
+            handles.QCButton.Enable            = 'off';
+            
+        else %you are reloading an old pick
+            
+            minlen         = length(Traces(1).data);
+            xrange         = (minlen/Traces(1).sampleRate)/2;
+            midpoint       = xrange;
+            xlimits        = [ (midpoint - xrange) ((midpoint) + xrange) ];
+            fitting_window = fw;%fw_start already loaded in correct name
+
+            % set "use" to yes for all of them unless they are out of range
+            useVec   = [Traces.QC];
+            inSrcVec = [Traces.inSrc];
+
+            t = (1:minlen)/Traces(1).sampleRate;
+            
+            handles.FWslide.Max         = diff(round((fitting_window)*Traces(1).sampleRate));
+            handles.FWslide.SliderStep  = [ 1/handles.FWslide.Max 3/handles.FWslide.Max ];
+            handles.FWslide.Value       = fw_ind;
+            
+            srcind = find(inSrcVec);
+            for k = 1:length(srcind)
+               
+                srcTr(:, k) = Traces(srcind(k)).data;
+                
+            end
+            
+            setappdata(gcf,'forSrc', {srcind srcTr}); %these are the traces that will go into the source estimate
+            setappdata(gcf,'ts_run', ts_run_all); 
+            
+            if exist('level', 'var')
+            
+                setappdata(gcf,'level',  level); %clear any preexisting_run. NOT SAVED IN EARLIEST VERSIONS
+            
+            else
+                
+                setappdata(gcf,'level',  0); %Will be incorrect if not saved from earlier run
+                
+            end
+                
+            handles.QCButton.Enable            = 'on';
             
         end
-        
-        % equalize trace length first
-        minlen = 1e100;
-        for k = 1:length(Traces)
-
-            minlen = min([minlen length(Traces(k).data)]);
-
-        end
-
-        for k = 1:length(Traces)
-
-            Traces(k).data = Traces(k).data(1:minlen);
-            Traces(k).sampleCount = minlen;
-
-        end
-
-        xd             = minlen/Traces(1).sampleRate;
-        midpoint       = (xd/2);
-        xlimits        = [ (midpoint - xrange) ((midpoint) + xrange) ];
-        fitting_window = [ (midpoint - xrange/2) (midpoint + xrange/2) ];
-        fw_start       = (midpoint - xrange);
-        
-        t = (1:minlen)/Traces(1).sampleRate;
-        
+                    
         lhtmp       = getappdata(gcf, 'lineHandles');
         stfwhtmp    = getappdata(gcf, 'stfwh');
         stfwhalltmp = getappdata(gcf, 'stfwh_all');
@@ -852,25 +960,7 @@ if ~dl
         if ~isempty(stfwhalltmp); delete(stfwhalltmp); end
         if ~isempty(fwhtmp);      delete(fwhtmp);      end
         if ~isempty(fwhalltmp);   delete(fwhalltmp);   end
-        
-        % set "use" to yes for all of them unless they are out of range
-        useVec = true(1, length(Traces));
-        degVec = [ str2double(handles.MinDeg.String) str2double(handles.MaxDeg.String) ];
-        % str2double appears to be faster than str2num
-        
-        for k = 1:length(Traces)
-           
-            [arc, ~] = distance(eventData.PreferredLatitude, eventData.PreferredLongitude, ...
-                Traces(k).latitude, Traces(k).longitude);
-            
-            if arc < degVec(1) || arc > degVec(2)
                 
-                useVec(k) = 0;
-                
-            end
-            
-        end
-        
         axes(handles.allWf_ax)
         hold on
         
@@ -887,9 +977,19 @@ if ~dl
             %get an empty array. When you assign to the empty array, the
             %handle is a double, not an object. Seems a bug in matlab?
             
+            if inSrcVec(k)
+                
+                lw = 4;
+                
+            else
+                
+                lw = 1;
+                
+            end
+            
             if useVec(k)
             
-                lh(k) = plot(t, Traces(k).data + k, 'k-', 'lineWidth', 1);
+                lh(k) = plot(t, Traces(k).data + k, 'k-', 'lineWidth', lw);
                                 
             else
                 
@@ -905,9 +1005,6 @@ if ~dl
         xlim(xlimits)
         ylim([-1 (length(lh)+1)])
         
-        % set "inSrc" to no for all of them
-        inSrcVec = false(1, length(Traces));
-
         % plot the first trace in the currWf axis
         setappdata(gcf,'currentWf',     1);
         setappdata(gcf,'nTraces',       length(Traces));
@@ -918,9 +1015,6 @@ if ~dl
         setappdata(gcf,'midpoint',      midpoint); %these are the traces that will go into the source estimate
         setappdata(gcf,'xrange',        xrange); %these are the traces that will go into the source estimate
         setappdata(gcf,'t',             t);
-        setappdata(gcf,'forSrc',        {[] []}); %these are the traces that will go into the source estimate
-        setappdata(gcf,'ts_run',        []); %clear any preexisting_run
-        setappdata(gcf,'level',         0); %clear any preexisting_run
         setappdata(gcf,'plotmode',      1);
         setappdata(gcf,'stfwh',         []);
         setappdata(gcf,'stfwh_all',     []);
@@ -954,7 +1048,6 @@ if ~dl
         setappdata(gcf, 'stfwh_all', stfwh_all);
         setappdata(gcf, 'fwh_all', fwh_all);
 
-        handles.QCButton.Enable            = 'off';
         handles.QCButton.Value             = false;
         handles.DataSelectionButton.Value  = true;
 
@@ -1792,3 +1885,38 @@ if round(eventdata.IntersectionPoint(2)) <= length(lh) && round(eventdata.Inters
     plotMap
 
 end
+
+
+% --- Executes on button press in pushbutton13.
+function pushbutton13_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton13 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+defAns = { num2str(getappdata(gcf, 'HighCorner')) num2str(getappdata(gcf, 'LowCorner')) ...
+    num2str(getappdata(gcf, 'DeltaLowerLimit')) num2str(getappdata(gcf, 'DeltaUpperLimit')) ...
+    getappdata(gcf, 'ChannelsKeep') };
+
+prmpt = { 'High frequency filter corner, Hz', 'Low frequency filter corner, Hz',...
+    'Minimum Delta', 'Maximum Delta', 'Channel, comma seperated'};
+
+sPar = inputdlg(prmpt, 'Set Data Parameters', 1, defAns);
+
+if ~isempty(sPar)
+    
+    setappdata(gcf,'HighCorner',      sPar{1});
+    setappdata(gcf,'LowCorner',       sPar{2});
+    setappdata(gcf,'DeltaLowerLimit', sPar{3});
+    setappdata(gcf,'DeltaUpperLimit', sPar{4});
+    setappdata(gcf,'ChannelsKeep',    sPar{5});
+    
+end
+
+% --- Executes on key press with focus on pushbutton13 and none of its controls.
+function pushbutton13_KeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to pushbutton13 (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.UICONTROL)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
