@@ -802,6 +802,29 @@ if ~dl
         handles.LoadDataButton.String = 'Loading...';
         drawnow
         
+                chan = {Traces.channel};
+        Traces(~((strcmp(chan, 'BHZ') | (strcmp(chan, 'HHZ'))))) = [];
+        
+        lon = [Traces.longitude];
+        [~, sind] = sort(lon);
+        Traces = Traces(sind);
+        
+        % remove instrument response only when it has not been removed
+        % during fetching
+        if(any([Traces.instrument]))
+            Traces = wfRemInstResp(Traces); 
+        end
+
+        filter_bounds = [ str2double(handles.LowHz.String) str2double(handles.HighHz.String) ];
+        % str2double appears to be faster than str2num
+    
+        filter_bounds(filter_bounds==0) = NaN;
+        
+
+        Traces = wfButterworth( Traces, filter_bounds);
+
+           
+        
         if ~exist('fw', 'var')%something that's saved
         
             chan = {Traces.channel};
@@ -951,6 +974,9 @@ if ~dl
                 
         axes(handles.allWf_ax)
         hold on
+        
+        % preallocate memory for faster plot
+        lh = gobjects(length(Traces));
         %plot all of the traces
         
         for k = 1:length(Traces)
