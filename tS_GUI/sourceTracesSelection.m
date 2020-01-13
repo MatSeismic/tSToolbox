@@ -801,27 +801,15 @@ if ~dl
         
         handles.LoadDataButton.String = 'Loading...';
         drawnow
-
-        chan = {Traces.channel};
-        Traces(~((strcmp(chan, 'BHZ') | (strcmp(chan, 'HHZ'))))) = [];
         
-        lon = [Traces.longitude];
-        [~, sind] = sort(lon);
-        Traces = Traces(sind);
+        if ~exist('fw', 'var')%something that's saved
         
-        % remove instrument response only when it has not been removed
-        % during fetching
-        if(any([Traces.instrument]))
-            Traces = wfRemInstResp(Traces); 
-        end
+            chan = {Traces.channel};
+            Traces(~strcmp(chan, ChannelsKeep)) = [];
 
-        filter_bounds = [ str2double(handles.LowHz.String) str2double(handles.HighHz.String) ];
-        % str2double appears to be faster than str2num
-    
-        filter_bounds(filter_bounds==0) = NaN;
-        
+            if isempty(Traces)
 
-           Traces = wfButterworth( Traces, filter_bounds);
+                error('No traces with the given channel(s)');
 
             end
 
@@ -963,11 +951,8 @@ if ~dl
                 
         axes(handles.allWf_ax)
         hold on
+        %plot all of the traces
         
-        % preallocate memory for graph handles
-        lh = gobjects(length(Traces));
-     
-        % plot all of the traces
         for k = 1:length(Traces)
 
             Traces(k).data = Traces(k).data/max(abs(Traces(k).data...
